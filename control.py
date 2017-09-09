@@ -1,9 +1,12 @@
+from shutil import rmtree
+
 import Adafruit_PCA9685
 import time
 
 from math import sin, pi
+
+import os
 import picamera
-from os import mkdir
 
 
 def map_range(x, X_min, X_max, Y_min, Y_max):
@@ -116,23 +119,33 @@ def calculate_steering(image):
     return (x_intercept(right) + x_intercept(left) - image_size[1] / 2) / image_size[1]
 
 
-k = 0.4
-throttle_scale = -0.3
-steering_scale = 1.0
+k = 0.2
+throttle_scale = -0.2
+steering_scale = -1.0
+
+if os.path.isdir('./output'):
+    rmtree('./output')
+
+
+os.mkdir('./output')
 
 
 def control_loop(camera, steering_controller, throttle_controller):
     image = np.empty(image_size + (3,), dtype=np.uint8)
     steering = 0
+    i = 0
     while True:
-        camera.capture_continuous(image, 'rgb', use_video_port=True)
-        steering = k * calculate_steering(image) + (1 - k) * steering
-        # steering = calculate_steering(image)
-        steering_controller.run(steering_scale * steering)
-        # throttle = 1 - 0.5 * steering ** 2
-        throttle = 1
-        throttle_controller.run(throttle_scale * throttle)
-        print(steering, throttle)
+        for _ in camera.capture_continuous(image, 'rgb', use_video_port=True):
+            steering = k * calculate_steering(image) + (1 - k) * steering
+            # steering = calculate_steering(image)
+            steering_controller.run(steering_scale * steering)
+            # throttle = 1 - 0.5 * steering ** 2
+            throttle = 1
+            throttle_controller.run(throttle_scale * throttle)
+
+            print(steering, throttle)
+            i += 1
+            cv2.imwrite('./output/{0}.jpg'.format(i), image)
 
 
 def main():
