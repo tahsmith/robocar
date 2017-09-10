@@ -132,7 +132,15 @@ def calculate_steering_2(image):
     if right.shape[0] == 0:
         return 1
 
-    return (np.mean(left[:, 0]) + np.mean(left[:, 2]) + np.mean(right[:, 2]) - image_size[1] / 2) / image_size[1]
+    return (
+        left.shape[0] - right.shape[0]
+    ) / (left.shape[0] + right.shape[0])
+
+    # return -(
+    #            (np.mean(left[:, 0]) + np.mean(left[:, 2]) + np.mean(right[:, 0]) + np.mean(right[:, 2])) / 4
+    #            - image_size[1] / 2
+    #        ) / image_size[1]
+
 
 k = 1.0
 throttle_scale = -0.2
@@ -140,7 +148,6 @@ steering_scale = -1.0
 
 if os.path.isdir('./output'):
     rmtree('./output')
-
 
 os.mkdir('./output')
 
