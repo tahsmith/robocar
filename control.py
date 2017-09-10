@@ -111,6 +111,9 @@ from image import *
 
 def calculate_steering(image):
     left, right = get_lane_lines(image)
+    if left is None and right is None:
+        return None
+
     if left is None:
         return -1
     if right is None:
@@ -119,7 +122,19 @@ def calculate_steering(image):
     return (x_intercept(right) + x_intercept(left) - image_size[1] / 2) / image_size[1]
 
 
-k = 0.2
+def calculate_steering_2(image):
+    left, right = split_lines(hough_lines(image))
+    if left.shape[0] == 0 and right.shape[0] == 0:
+        return None
+
+    if left.shape[0] == 0:
+        return -1
+    if right.shape[0] == 0:
+        return 1
+
+    return (np.mean(left[:, 0]) + np.mean(left[:, 2]) + np.mean(right[:, 2]) - image_size[1] / 2) / image_size[1]
+
+k = 1.0
 throttle_scale = -0.2
 steering_scale = -1.0
 
@@ -136,8 +151,11 @@ def control_loop(camera, steering_controller, throttle_controller):
     i = 0
     while True:
         for _ in camera.capture_continuous(image, 'rgb', use_video_port=True):
-            steering = k * calculate_steering(image) + (1 - k) * steering
-            # steering = calculate_steering(image)
+            steering_new = calculate_steering_2(image)
+            if steering_new is None:
+                steering_new = steering
+
+            steering = k * steering_new + (1 - k) * steering
             steering_controller.run(steering_scale * steering)
             # throttle = 1 - 0.5 * steering ** 2
             throttle = 1
