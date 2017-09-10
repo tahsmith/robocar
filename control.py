@@ -142,8 +142,8 @@ def calculate_steering_2(image):
     #        ) / image_size[1]
 
 
-k = 1.0
-throttle_scale = -0.2
+k = 0.6
+throttle_scale = -0.20
 steering_scale = -1.0
 
 if os.path.isdir('./output'):
@@ -160,7 +160,7 @@ def control_loop(camera, steering_controller, throttle_controller):
         for _ in camera.capture_continuous(image, 'rgb', use_video_port=True):
             steering_new = calculate_steering_2(image)
             if steering_new is None:
-                steering_new = steering
+                steering_new = 0
 
             steering = k * steering_new + (1 - k) * steering
             steering_controller.run(steering_scale * steering)
